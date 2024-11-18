@@ -71,6 +71,12 @@ Cronos is a robust and flexible cron job management system designed for develope
 
 Update BRANCH="dev" in the `development.sh` script to the desired branch.
 
+Ensure the scripts are executable:
+
+```bash
+chmod +x development.sh
+```
+
 Run the development setup script:
 
 ```bash
@@ -96,6 +102,12 @@ This will:
 
 Update `BRANCH="main"` in the `deployment.sh` script to the desired branch.
 
+Ensure the scripts are executable:
+
+```bash
+chmod +x deployment.sh
+```
+
 Run the deployment setup script:
 
 ```bash
@@ -107,6 +119,19 @@ This will:
 - Pull the latest code from the main branch.
 - Install and build the client and server.
 - Restart/Run services using pm2.
+
+---
+
+## Standing on the Shoulders of Giants 🦸
+
+- **Node.js**: Because, JavaScript.
+- **React**: A JavaScript library for building user interfaces.
+- **Express**: A fast, unopinionated, minimalist web framework for Node.js.
+- **MongoDB**: A general-purpose, document-based, distributed database.
+- **Docker**: A platform for developing, shipping, and running applications in containers.
+- **React Query**: A data-fetching library for React.
+- **ShadCN**: The best UI library since sliced bread.
+- **Node-Cron**: A simple cron-like job scheduler for Node.js.
 
 ---
 
