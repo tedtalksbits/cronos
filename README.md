@@ -52,9 +52,12 @@ Cronos is a robust and flexible cron job management system designed for develope
 
 **ENV Variables**
 
-copy the `.env-example` file to `.env` and update the environment variables.
+1. Copy the `.env-example` file to `.env` in the following directories:
 
-update the values to match your environment.
+- `client`
+- `server`
+
+2. Update the values in the `.env` files to match your environment.
 
 **Development Setup**
 
