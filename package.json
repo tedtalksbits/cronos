@@ -1,0 +1,27 @@
+{
+  "scripts": {
+    "dev:start:all": "concurrently -n SERVER,CLIENT -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "dev:pull": "git pull origin dev",
+    "dev:install:main": "npm install",
+    "dev:install:server": "npm --prefix server install",
+    "dev:install:client": "npm --prefix client install",
+    "dev:install": "npm run dev:install:main && npm run dev:install:server && npm run dev:install:client",
+    "dev:update": "npm run dev:pull && npm run dev:install",
+    "prod:pull": "git pull origin main",
+    "prod:install:main": "npm install",
+    "prod:build:server": "npm --prefix server install && npm --prefix server run build",
+    "prod:build:client": "npm --prefix client install && npm --prefix client run build",
+    "prod:build": "npm run prod:build:server && npm run prod:build:client",
+    "prod:restart:server": "pm2 restart cronos-server --update-env",
+    "prod:restart:client": "pm2 restart cron-client --update-env",
+    "prod:restart": "npm run prod:restart:client && npm run prod:restart:server",
+    "prod:update": "npm run prod:pull && npm run prod:install:main && npm run prod:build && npm run && npm run prod:restart",
+    "dev": "bash ./development.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.7"
+  }
+}
