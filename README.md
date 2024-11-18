@@ -58,7 +58,11 @@ Cronos is a robust and flexible cron job management system designed for develope
    cd cronos
    ```
 
-**Run the development setup script:**
+**Steps**
+
+Update BRANCH="dev" in the `development.sh` script to the desired branch.
+
+Run the development setup script:
 
 ```bash
 ./development.sh
@@ -80,6 +84,9 @@ This will:
 - Ensure the production environment meets the prerequisites listed above.
 
 **Steps**
+
+Update `BRANCH="main"` in the `deployment.sh` script to the desired branch.
+
 Run the deployment setup script:
 
 ```bash
