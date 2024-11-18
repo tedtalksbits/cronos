@@ -100,3 +100,9 @@ This will:
 - Restart/Run services using pm2.
 
 ---
+
+## TODO 📝
+
+- [ ] Containerize the application using Docker.
+- [ ] Add unit tests for the server and client.
+- [ ] Render script test results in the UI.
