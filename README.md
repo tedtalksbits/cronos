@@ -50,6 +50,12 @@ Cronos is a robust and flexible cron job management system designed for develope
 - **Docker**: Docker is required for script sandboxing.
 - **MongoDB**: A running MongoDB instance.
 
+**ENV Variables**
+
+copy the `.env-example` file to `.env` and update the environment variables.
+
+update the values to match your environment.
+
 **Development Setup**
 
 1. Clone the repository:
