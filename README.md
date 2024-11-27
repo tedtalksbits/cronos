@@ -11,6 +11,15 @@ Cronos is a robust and flexible cron job management system designed for develope
 
 ---
 
+## Screenshots
+![Dashboard](https://github.com/user-attachments/assets/3ea2a61e-847f-48d1-a561-cb178046ebd5)
+![Cron Logs](https://github.com/user-attachments/assets/766af4e6-d7bc-49f3-aba0-6b1391918d01)
+![Scripts](https://github.com/user-attachments/assets/2c155655-4c03-45df-ac55-ee69fcdf9688)
+![Uswer Management](https://github.com/user-attachments/assets/a37b95ec-0174-4986-bc22-51027362dd9c)
+
+
+
+
 ## Features 🚀
 
 ### Core Features
