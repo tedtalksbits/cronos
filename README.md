@@ -151,3 +151,5 @@ This will:
 - [ ] Containerize the application using Docker.
 - [ ] Add unit tests for the server and client.
 - [ ] Render script test results in the UI.
+- [ ] CI/CD: github actions
+- [ ] Better Documentation
