@@ -7,7 +7,7 @@
 
 ```
 
-Cronos is a robust and flexible cron job management system designed for developers and administrators to efficiently manage, execute, and monitor cron jobs. This project integrates features like cron logs, webhooks, user management, script execution, and more, leveraging technologies like Docker, Node.js, React, and MongoDB for a seamless experience.
+Cronos is a robust and flexible cron job management system designed for developers and administrators to efficiently manage, execute, and monitor cron jobs. This project integrates features like cron logs, webhooks, user management, script execution, and more, using technologies like Docker, Node.js, React, and MongoDB for a seamless experience.
 
 ---
 
@@ -50,20 +50,12 @@ Cronos is a robust and flexible cron job management system designed for develope
 - **Docker**: Docker is required for script sandboxing.
 - **MongoDB**: A running MongoDB instance.
 
-**ENV Variables**
-
-1. Copy the `.env-example` file to `.env` in the following directories:
-
-- `client`
-- `server`
-
-2. Update the values in the `.env` files to match your environment.
 
 **Development Setup**
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/cronos.git
+   git clone https://github.com/tedtalksbits/cronos.git
    cd cronos
    ```
 
@@ -91,6 +83,16 @@ This will:
 - Start the server and client in development mode.
 
 ---
+
+**ENV Variables**
+
+2. Copy the `.env-example` file to `.env` in the following directories:
+
+- `client`
+- `server`
+
+3. Update the values in the `.env` files to match your environment.
+
 
 ## Deployment 🌐
 
