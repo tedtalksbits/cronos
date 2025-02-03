@@ -68,17 +68,41 @@ Cronos is a robust and flexible cron job management system designed for develope
    cd cronos
    ```
 
+### Docker
+
+**Steps**
+1. Copy the `.env-example` file to `.env` in the following directories:
+
+- `client`
+- `server`
+
+2. Update the values in the `.env` files to match your environment.
+
+3. Run docker command
+```bash
+docker compose up --build
+```
+
+### Helper Scripts
+
 **Steps**
 
-Update BRANCH="dev" in the `development.sh` script to the desired branch.
+1. Copy the `.env-example` file to `.env` in the following directories:
 
-Ensure the scripts are executable:
+- `client`
+- `server`
+
+2. Update the values in the `.env` files to match your environment.
+
+3. Update BRANCH="dev" in the `development.sh` script to the desired branch.
+
+   a.Ensure the scripts are executable:
 
 ```bash
 chmod +x development.sh
 ```
 
-Run the development setup script:
+4. Run the development setup script:
 
 ```bash
 ./development.sh
@@ -93,15 +117,6 @@ This will:
 
 ---
 
-**ENV Variables**
-
-2. Copy the `.env-example` file to `.env` in the following directories:
-
-- `client`
-- `server`
-
-3. Update the values in the `.env` files to match your environment.
-
 
 ## Deployment 🌐
 
@@ -111,15 +126,23 @@ This will:
 
 **Steps**
 
-Update `BRANCH="main"` in the `deployment.sh` script to the desired branch.
+**Steps**
+1. Copy the `.env-example` file to `.env` in the following directories:
 
-Ensure the scripts are executable:
+- `client`
+- `server`
+
+2. Update the values in the `.env` files to match your environment.
+
+3. Update `BRANCH="main"` in the `deployment.sh` script to the desired branch.
+
+   a. Ensure the scripts are executable:
 
 ```bash
 chmod +x deployment.sh
 ```
 
-Run the deployment setup script:
+4. Run the deployment setup script:
 
 ```bash
 ./deployment.sh
