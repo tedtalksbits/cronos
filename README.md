@@ -51,7 +51,7 @@ Cronos is a robust and flexible cron job management system designed for develope
 
 ---
 
-## Installation 🛠️
+## Installation 🛠️ Docker or Helper Script
 
 **Prerequisites**
 
