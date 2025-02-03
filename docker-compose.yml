@@ -4,26 +4,10 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    env_file:
+      - ./server/.env
     ports:
       - '3005:3005'
-    environment:
-      - PORT=3005
-      - MONGO_URI=${MONGO_URI}
-      - JWT_SECRET=${JWT_SECRET}
-      - SESSION_SECRET=${SESSION_SECRET}
-      - MAIL_USER=${MAIL_USER}
-      - MAIL_PASS=${MAIL_PASS}
-      - MAIL_HOST=${MAIL_HOST}
-      - MAX_CRON_LOGS=${MAX_CRON_LOGS}
-      - SERVER_ADMIN_EMAIL=${SERVER_ADMIN_EMAIL}
-      - SERVER_ADMIN_NAME=${SERVER_ADMIN_NAME}
-      - SERVER_ADMIN_FIRSTNAME=${SERVER_ADMIN_FIRSTNAME}
-      - SERVER_ADMIN_LASTNAME=${SERVER_ADMIN_LASTNAME}
-      - SERVER_ADMIN_PASSWORD=${SERVER_ADMIN_PASSWORD}
-      - SERVER_ADMIN_PHONE=${SERVER_ADMIN_PHONE}
-      - SERVER_URL=${SERVER_URL}
-      - SERVER_TOKEN=${SERVER_TOKEN}
-      - CLIENT_URL=${CLIENT_URL}
     depends_on:
       - mongo
 
@@ -38,10 +22,10 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+    env_file:
+      - ./client/.env
     ports:
       - '4173:4173'
-    environment:
-      - VITE_APP_API_URL=http://localhost:3005/api
 
 volumes:
   mongo-data:

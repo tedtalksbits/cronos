@@ -33,6 +33,14 @@ import { PageHeading } from '@/app/components/page-heading';
 import { ErrorPage } from '@/app/components/error';
 import { LoadingPage } from '@/app/components/loading';
 import { useAuth } from '@/hooks/useAuth';
+import { RestResponse } from '@/app/types/api';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { ScriptDisplay } from './components/ScriptCard';
 const DEFAULT_SCRIPT: Partial<Script> = {
   content: `#!/bin/bash\n\necho 'Hello, World!'`,
   name: '',
@@ -41,8 +49,16 @@ const DEFAULT_SCRIPT: Partial<Script> = {
 };
 export const Scripts = () => {
   const { user } = useAuth();
+  const [selectedScript, setSelectedScript] = React.useState<Script | null>(
+    null
+  );
   const [showForm, setShowForm] = React.useState<'edit' | 'new' | null>(null);
   const [script, setScript] = React.useState<Partial<Script>>(DEFAULT_SCRIPT);
+  const [testScriptResult, setTestScriptResult] = React.useState<RestResponse<{
+    stdout: string;
+    stderr: string;
+    error?: string;
+  }> | null>(null);
   // get all scripts
   const { data: scripts, error, isLoading } = useGetAllScripts();
   // delete script
@@ -143,6 +159,7 @@ export const Scripts = () => {
     const res = await testScript(id);
     if (res.status === 200) {
       toast.success('Script executed successfully');
+      setTestScriptResult(res);
     } else {
       toast.error('Error executing script');
     }
@@ -206,9 +223,8 @@ export const Scripts = () => {
             <CardDescription>Manage your scripts</CardDescription>
           </div>
 
-          <Button onClick={openNewForm}>
-            <Plus className='mr-2 size-4' />
-            New Script
+          <Button onClick={openNewForm} size={'icon'}>
+            <Plus className='size-4' />
           </Button>
         </CardHeader>
         <CardContent>
@@ -254,7 +270,11 @@ export const Scripts = () => {
                       <Button
                         variant='outline'
                         size={'icon'}
-                        onClick={() => handleRunScript(script._id)}
+                        disabled={isTestScriptPending}
+                        onClick={() => {
+                          handleRunScript(script._id);
+                          setSelectedScript(script);
+                        }}
                       >
                         <PlayIcon className='size-4' />
                       </Button>
@@ -274,6 +294,36 @@ export const Scripts = () => {
           </Table>
         </CardContent>
       </Card>
+      <Sheet
+        open={testScriptResult !== null}
+        onOpenChange={() => setTestScriptResult(null)}
+      >
+        <SheetContent className='sm:min-w-[50vw] min-w-[100vw] max-w-[80vw]'>
+          <SheetHeader>
+            <SheetTitle>Test Script Result</SheetTitle>
+          </SheetHeader>
+          <div>
+            <h3>Details</h3>
+            {selectedScript && <ScriptDisplay script={selectedScript} />}
+            <h3 className='text-lg font-semibold'>Output</h3>
+            <pre className='p-4 bg-card text-foreground/80 rounded-md overflow-auto shadow-sm border border-border'>
+              {
+                //show line numbers
+                testScriptResult?.data?.stdout
+                  .split('\n')
+                  .map((line, index) => (
+                    <div key={index} className='flex items-center gap-2'>
+                      <span className='text-foreground/50 text-xs'>
+                        {index + 1}
+                      </span>{' '}
+                      {line}
+                    </div>
+                  ))
+              }
+            </pre>
+          </div>
+        </SheetContent>
+      </Sheet>
     </PageLayout>
   );
 };

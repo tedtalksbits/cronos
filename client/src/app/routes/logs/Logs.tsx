@@ -55,6 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BREAK_POINTS, useMediaQuery } from '@/hooks/utils/useMediaQuery';
 const { VITE_APP_WS_URL } = import.meta.env;
 interface LogQuery {
   page: number;
@@ -79,6 +80,7 @@ export const Logs = () => {
   const location = useLocation();
   const { wsState } = useWebSocket(VITE_APP_WS_URL);
   const { id } = useParams();
+  const isDesktop = useMediaQuery(BREAK_POINTS.md);
   if (!id) {
     throw new Error('ID must be provided');
   }
@@ -122,8 +124,9 @@ export const Logs = () => {
         </div>
       </header>
       <Link to='/dashboard' state={{ from }}>
-        <Button className='mb-4'>
-          <ArrowLeft className='mr-2 h-4 w-4' /> Back to Dashboard
+        <Button className='mb-4' size={isDesktop ? 'default' : 'icon'}>
+          <ArrowLeft className='sm:mr-2 h-4 w-4' />{' '}
+          <span className='sm:block hidden'>Back to Dashboard</span>
         </Button>
       </Link>
 
@@ -138,9 +141,13 @@ export const Logs = () => {
           </CardHeader>
           <CardContent>
             <div className='metrics'>
-              <div>
+              <div className='flex items-center gap-1'>
                 <span className='text-muted-foreground'>Total Executions:</span>{' '}
-                {logs?.data?.length}
+                <span className='font-semibold'>{logs?.data?.length}</span>
+                <span className='text-muted-foreground'>/</span>
+                <span className='text-muted-foreground'>
+                  {logs?.meta?.total}
+                </span>
               </div>
               <div>
                 <span className='text-muted-foreground'>Average Duration:</span>{' '}
@@ -187,26 +194,34 @@ export const Logs = () => {
               View execution status for this cron job
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className='metrics'>
-              <div>
-                <span className='text-muted-foreground'>Success Rate:</span>{' '}
-                {calculateSuccessRate(logs?.data)}%
+          {logs?.data && (
+            <CardContent>
+              <div className='metrics'>
+                <div className='flex items-center gap-1'>
+                  <span className='text-muted-foreground'>
+                    Total Executions:
+                  </span>{' '}
+                  <span className='font-semibold'>{logs?.data?.length}</span>
+                  <span className='text-muted-foreground'>/</span>
+                  <span className='text-muted-foreground'>
+                    {logs?.meta?.total}
+                  </span>
+                </div>
+                <div>
+                  <span className='text-muted-foreground'>Success Rate:</span>{' '}
+                  {calculateSuccessRate(logs.data)}%
+                </div>
+
+                <div>
+                  <span className='text-muted-foreground'>Last Execution:</span>{' '}
+                  {logs.data?.[0]?.executedAt &&
+                    format(
+                      new Date(logs.data?.[0]?.executedAt),
+                      'MM/dd/yyyy HH:mm:ss'
+                    )}
+                </div>
               </div>
-              <div>
-                <span className='text-muted-foreground'>Total Executions:</span>{' '}
-                {logs?.data?.length}
-              </div>
-              <div>
-                <span className='text-muted-foreground'>Last Execution:</span>{' '}
-                {logs?.data?.[0]?.executedAt &&
-                  format(
-                    new Date(logs?.data?.[0]?.executedAt),
-                    'MM/dd/yyyy HH:mm:ss'
-                  )}
-              </div>
-            </div>
-            {logs?.data && (
+
               <BarChart
                 data={prepareStatusBarChartData(logs?.data)}
                 categories={['Success', 'Failure']}
@@ -218,8 +233,8 @@ export const Logs = () => {
                 autoMinValue
                 colors={['success', 'destructive']}
               />
-            )}
-          </CardContent>
+            </CardContent>
+          )}
         </Card>
       </div>
 
@@ -278,7 +293,7 @@ export const Logs = () => {
           </Table>
         </CardContent>
         <PaginationControls
-          className='sticky bottom-0 pt-4'
+          className='pt-4'
           currentPage={logs?.meta?.page ?? 1}
           totalPages={logs?.meta?.totalPages ?? 1}
           handlePagination={(page) => setQuery({ ...query, page })}
@@ -536,3 +551,18 @@ function FilterControls({
     </div>
   );
 }
+
+// function DisplayLogsRangeDate({ logs }: { logs: ICronJobLog[] }) {
+//   return (
+//     <div className='flex items-center'>
+//       <Clock className='size-4 text-muted-foreground' />
+//       {format(new Date(logs[0].executedAt), 'MM/dd/yyyy HH:mm:ss')}
+//       <span className='mx-2'>-</span>
+//       <Clock className='size-4 text-muted-foreground' />
+//       {format(
+//         new Date(logs[logs.length - 1].executedAt),
+//         'MM/dd/yyyy HH:mm:ss'
+//       )}
+//     </div>
+//   );
+// }

@@ -3,12 +3,12 @@ import { APIError } from '@/lib/CustomError';
 import { getLocalAuthToken, User } from '@/providers/AuthProvider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 const { VITE_APP_API_URL } = import.meta.env;
-const localAuthToken = getLocalAuthToken();
 
 const useGetUsers = () => {
   return useQuery<RestResponse<User[]>, APIError>({
     queryKey: ['users'],
     queryFn: async () => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/auth/users`, {
         headers: {
           Authorization: `Bearer ${localAuthToken}`,
@@ -31,6 +31,7 @@ const useGetUser = (userId: string) => {
   return useQuery<RestResponse<User>, APIError>({
     queryKey: ['users', userId],
     queryFn: async () => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/auth/users/${userId}`, {
         headers: {
           Authorization: `Bearer ${localAuthToken}`,
@@ -53,6 +54,7 @@ const useCreateUser = () => {
   const queryClient = useQueryClient();
   return useMutation<RestResponse<User>, APIError, Partial<User>>({
     mutationFn: async (newUser) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/auth/users`, {
         method: 'POST',
         headers: {
@@ -90,6 +92,7 @@ const useUpdateUser = () => {
     }
   >({
     mutationFn: async ({ id, update }) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/auth/users/${id}`, {
         method: 'PUT',
         headers: {
@@ -120,6 +123,7 @@ const useDeleteUser = () => {
   const queryClient = useQueryClient();
   return useMutation<RestResponse<User>, APIError, string>({
     mutationFn: async (id) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/auth/users/${id}`, {
         method: 'DELETE',
         headers: {

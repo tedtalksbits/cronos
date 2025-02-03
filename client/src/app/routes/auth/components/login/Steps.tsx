@@ -54,16 +54,18 @@ export const LoginStep2 = ({ isLoading, formData, setFormData }: StepProps) => {
         Two-Factor Authentication
       </h3>
       <p className='text-sm text-muted-foreground mb-4'>
-        Please enter the code sent to your <b>authenticator app</b> to continue
+        A code has been sent to your email. Please enter it below.
       </p>
       <div className='grid grid-cols-2 gap-4'>
         <div className='grid gap-2'>
-          <Label htmlFor='firstName'>Code</Label>
+          <Label htmlFor='code'>Code</Label>
           <InputOTP
+            name='code'
+            id='code'
             disabled={isLoading}
             maxLength={6}
-            onChange={(value) => setFormData({ ...formData, token: value })}
-            value={formData.token}
+            onChange={(value) => setFormData({ ...formData, otp: value })}
+            value={formData.otp}
           >
             <InputOTPGroup>
               <InputOTPSlot index={0} />

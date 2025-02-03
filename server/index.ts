@@ -5,14 +5,16 @@ import dotenv from 'dotenv';
 import { WebSocketServer } from 'ws';
 import http from 'http';
 
-import { setWss } from './wsManager';
+import { setWss, WebSocketMessage } from './wsManager';
 import logger from './utils/logger';
+import historyRoutes from './features/history/routes';
 import cronJobRoutes from './features/cronjobs/routes';
 import userRoutes from './features/users/routes';
 import CronJob from './features/cronjobs/models';
 import scriptRoutes from './features/scripts/routes';
+import apiHealthRoutes from './features/health/routes';
 import { createCronJobTask } from './features/cronjobs/services';
-import { createServerAdminAccount } from './utils/auth';
+import { createServerAdminAccount, createServerBotUser } from './utils/auth';
 
 dotenv.config();
 
@@ -20,7 +22,7 @@ const app = express();
 app.set('trust proxy', 1); // Trust first proxy
 // CORS configuration
 const corsOptions = {
-  origin: ['https://cronos.blake-fam.fun', 'http://localhost:3174'], // Allow this origin to access the resources
+  origin: [process.env.CLIENT_URL ?? 'http://localhost:4174'], // Allow this origin to access the resources
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
 };
@@ -33,6 +35,8 @@ const PORT = process.env.PORT || 3005;
 app.use('/api/cronJobs', cronJobRoutes);
 app.use('/api/auth', userRoutes);
 app.use('/api/scripts', scriptRoutes);
+app.use('/api/health', apiHealthRoutes);
+app.use('/api/history', historyRoutes);
 
 // Connect to MongoDB
 const MONGO_URI = process.env.MONGO_URI;
@@ -49,6 +53,7 @@ mongoose
     console.log('Connected to MongoDB');
     logger.info('Connected to MongoDB');
     await createServerAdminAccount();
+    await createServerBotUser();
   })
   .catch((err) => {
     console.log('Error connecting to MongoDB', err);
@@ -97,16 +102,18 @@ wss.on('connection', (ws) => {
   });
 
   ws.send(
-    JSON.stringify({
-      operation: 'connection',
-      message: 'WebSocket connection established',
-    })
+    new WebSocketMessage('WebSocket connection established', 'connection', {
+      connected: true,
+      date: new Date(),
+    }).toJson()
   );
 
   // Send message to client every 5 seconds
   const interval = setInterval(() => {
     ws.send(
-      JSON.stringify({ operation: 'message', message: 'Hello from the server' })
+      new WebSocketMessage('Message from server', 'ping', {
+        date: new Date(),
+      }).toJson()
     );
   }, 10000);
 

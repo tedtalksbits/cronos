@@ -223,8 +223,8 @@ export const Dashboard = () => {
             onOpenChange={(o) => setIsNewFormOpen(o)}
           >
             <DialogTrigger asChild>
-              <Button onClick={() => setIsNewFormOpen(true)}>
-                <Plus className='mr-2 size-4' /> Add New Job
+              <Button onClick={() => setIsNewFormOpen(true)} size={'icon'}>
+                <Plus className='size-4' />
               </Button>
             </DialogTrigger>
             <DialogContent>

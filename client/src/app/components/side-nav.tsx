@@ -5,6 +5,8 @@ import {
   Clock9Icon,
   Code2Icon,
   DoorClosedIcon,
+  History,
+  Logs,
   MoonIcon,
   SunIcon,
   UserCircle2Icon,
@@ -25,7 +27,7 @@ export default function SideNav() {
       <div className='flex items-center justify-between px-3 border-b h-16'>
         <h3 className='logo font-black flex'>
           <Clock9Icon className='size-6 mr-2' />
-          Chonos
+          Cronos
         </h3>
         <Button
           size='icon'
@@ -114,6 +116,53 @@ export function NavItems({ onNavigate }: { onNavigate?: () => void }) {
         <UserCircle2Icon className='size-4' />
         <span>Users</span>
 
+        <ChevronRightIcon
+          className={cn(
+            'size-4 transition-all ml-auto opacity-0 -translate-x-4',
+            {
+              'opacity-100 translate-x-0': location.pathname.includes('/users'),
+            }
+          )}
+        />
+      </NavLink>
+      <NavLink
+        onClick={onNavigate}
+        to='/server-logs'
+        state={{ from }}
+        className={({ isActive }) =>
+          cn('flex items-center p-3 gap-4 hover:bg-card rounded-md group', {
+            'bg-accent': isActive,
+            'text-foreground': !isActive,
+            active: isActive,
+          })
+        }
+      >
+        <Logs className='size-4' />
+        <span>Server Logs</span>
+
+        <ChevronRightIcon
+          className={cn(
+            'size-4 transition-all ml-auto opacity-0 -translate-x-4',
+            {
+              'opacity-100 translate-x-0': location.pathname.includes('/users'),
+            }
+          )}
+        />
+      </NavLink>
+      <NavLink
+        onClick={onNavigate}
+        to='/history'
+        state={{ from }}
+        className={({ isActive }) =>
+          cn('flex items-center p-3 gap-4 hover:bg-card rounded-md group', {
+            'bg-accent': isActive,
+            'text-foreground': !isActive,
+            active: isActive,
+          })
+        }
+      >
+        <History className='size-4' />
+        <span>History</span>
         <ChevronRightIcon
           className={cn(
             'size-4 transition-all ml-auto opacity-0 -translate-x-4',

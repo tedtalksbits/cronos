@@ -2,35 +2,34 @@ import React, { useState } from 'react';
 import { LoginStep1, LoginStep2 } from './components/login/Steps';
 import { Clock9Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LoginCredentials, LoginResponse } from '@/providers/AuthProvider';
+import { LoginResponse } from '@/providers/AuthProvider';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 export interface StepProps {
   currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   isLoading: boolean;
   formData: {
     email: string;
     password: string;
-    token: string;
+    otp: string;
   };
   setFormData: React.Dispatch<
     React.SetStateAction<{
       email: string;
       password: string;
-      token: string;
+      otp: string;
     }>
   >;
 }
 const STEPS = [
   {
-    title: 'Step One',
+    title: 'Request OTP',
     component: LoginStep1,
   },
   {
-    title: 'Step Two',
+    title: 'Enter OTP',
     component: LoginStep2,
   },
 ];
@@ -38,49 +37,84 @@ const STEPS = [
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlState = location.state;
+  const currentStep = parseInt(searchParams.get('step') || '0', 10);
+  const email = searchParams.get('email') || '';
   const { login, requestOTP } = useAuth();
-  const [currentStep, setCurrentStep] = useState(0);
+  // const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [, setResponse] = useState<LoginResponse | null>(null);
-  const [formData, setFormData] = React.useState<LoginCredentials>({
-    email: '',
+  const [formData, setFormData] = React.useState<{
+    email: string;
+    password: string;
+    otp: string;
+  }>({
+    email: email || '',
     password: '',
-    token: '',
+    otp: '',
   });
 
   const from = location.state?.from?.pathname || '/';
 
+  const updateStep = (data: { step: string; email: string }) => {
+    setSearchParams(data);
+    location.state = { password: formData.password };
+  };
+
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault();
     setIsLoading(true);
-    await login(formData, (res) => {
-      setIsLoading(false);
-      setResponse(res);
+    console.log('formData', formData);
+    console.log('location state', urlState);
+    await login(
+      {
+        email: formData.email,
+        otp: formData.otp,
+      },
+      (res) => {
+        setIsLoading(false);
+        setResponse(res);
 
-      if (res.status === 200) {
-        // Redirect to dashboard
-        navigate(from, { replace: true });
-      } else {
-        toast.error(res.message);
-      }
-    });
-  }
-  const handleNext = async () => {
-    await requestOTP(formData.email, (res) => {
-      if (res.status !== 200) {
-        toast.error(res.message);
-      }
-      if (res.status === 200) {
-        toast.success(res.message);
-
-        if (currentStep < STEPS.length - 1) {
-          setCurrentStep(currentStep + 1);
+        if (res.status === 200) {
+          // Redirect to dashboard
+          navigate(from, { replace: true });
+        } else {
+          toast.error(res.message);
         }
       }
-    });
+    );
+  }
+  const handleNext = async () => {
+    await requestOTP(
+      {
+        email: formData.email,
+        password: formData.password,
+      },
+      (res) => {
+        if (res.status !== 200) {
+          toast.error(res.message);
+        }
+        if (res.status === 200) {
+          toast.success(res.message);
+
+          if (currentStep < STEPS.length - 1) {
+            updateStep({
+              step: (currentStep + 1).toString(),
+              email: formData.email,
+            });
+          }
+        }
+      }
+    );
   };
   const handlePrev = () => {
-    currentStep > 0 && setCurrentStep(currentStep - 1);
+    if (currentStep > 0) {
+      updateStep({
+        step: (currentStep - 1).toString(),
+        email: formData.email,
+      });
+    }
   };
   return (
     <div className='mx-auto max-w-[450px] space-y-6'>
@@ -96,7 +130,7 @@ const Login = () => {
       <header className='space-y-2 text-center my-16'>
         <div className='flex items-center justify-center'>
           <Clock9Icon className='size-6 mr-2' />
-          <span className='text-2xl font-bold'>Chronos</span>
+          <span className='text-2xl font-bold'>Cronos</span>
         </div>
         <h1 className='text-2xl font-semibold tracking-tight'>Sign in</h1>
         <p className='text-sm text-muted-foreground'>
@@ -109,7 +143,6 @@ const Login = () => {
       >
         {STEPS[currentStep].component({
           currentStep,
-          setCurrentStep,
           isLoading,
           formData,
           setFormData,

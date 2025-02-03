@@ -88,7 +88,7 @@ export const EmailVerification = () => {
           {locationState.status === 'error' && (
             <CardFooter className='flex flex-col space-y-2'>
               <a
-                href='mailto:admin@gmail.com'
+                href='mailto:tedaneblake@gmail.com'
                 className='text-sm text-foreground/50 hover:text-foreground'
               >
                 <Button variant='outline' className='w-full'>

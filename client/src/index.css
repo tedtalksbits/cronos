@@ -9,7 +9,7 @@
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
+    --primary: 153 60% 53%;
     --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
@@ -31,7 +31,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.95rem;
+    --radius: 0.5rem;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -40,7 +40,7 @@
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
+    --primary: 153 60% 53%;
     --primary-foreground: 0 0% 9%;
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
@@ -48,12 +48,12 @@
     --muted-foreground: 0 0% 63.9%;
     --accent: 0 0% 14.9%;
     --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 10 85% 63%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
-    --success: 150 58% 40%;
+    --success: 153 60% 50%;
     --success-foreground: 0 0% 9%;
     --info: 210 100% 50%;
     --info-foreground: 0 0% 98%;
@@ -67,6 +67,9 @@
 @layer base {
   * {
     @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground font-SUSE;
@@ -162,5 +165,19 @@
 
   select {
     @apply rounded-sm bg-card text-sm text-foreground/80 ml-2 border border-border px-2 py-1;
+  }
+  input[type='datetime-local'] {
+    @apply bg-card text-sm text-foreground/80 border border-border w-full;
+  }
+  input[type='date']::-webkit-inner-spin-button,
+  input[type='date']::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+  }
+
+  input[type='datetime-local']::-webkit-inner-spin-button,
+  input[type='datetime-local']::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
   }
 }

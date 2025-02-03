@@ -15,16 +15,18 @@ export interface Script {
     firstName: string;
     lastName: string;
     avatar: string;
+    email: string;
   };
   tags?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
-const localAuthToken = getLocalAuthToken();
 const useGetAllScripts = () => {
   return useQuery<RestResponse<Script[]>, APIError>({
     queryKey: ['scripts'],
     queryFn: async () => {
+      const localAuthToken = getLocalAuthToken();
+
       const response = await fetch(`${VITE_APP_API_URL}/scripts`, {
         headers: {
           Authorization: `Bearer ${localAuthToken}`,
@@ -46,6 +48,7 @@ const useGetScript = (scriptId: string) => {
   return useQuery<RestResponse<Script>, APIError>({
     queryKey: ['scripts', scriptId],
     queryFn: async () => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/scripts/${scriptId}`, {
         headers: {
           Authorization: `Bearer ${localAuthToken}`,
@@ -67,6 +70,7 @@ const useCreateScript = () => {
   const queryClient = useQueryClient();
   return useMutation<RestResponse<Script>, APIError, Partial<Script>>({
     mutationFn: async (script) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/scripts`, {
         method: 'POST',
         headers: {
@@ -103,6 +107,7 @@ const useUpdateScript = () => {
     }
   >({
     mutationFn: async ({ id, update }) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/scripts/${id}`, {
         method: 'PUT',
         headers: {
@@ -132,6 +137,7 @@ const useDeleteScript = () => {
   const queryClient = useQueryClient();
   return useMutation<RestResponse<Script>, APIError, string>({
     mutationFn: async (id) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/scripts/${id}`, {
         method: 'DELETE',
         headers: {
@@ -156,8 +162,17 @@ const useDeleteScript = () => {
 };
 
 const useTestScript = () => {
-  return useMutation<RestResponse<Script>, APIError, string>({
+  return useMutation<
+    RestResponse<{
+      stdout: string;
+      stderr: string;
+      error?: string;
+    }>,
+    APIError,
+    string
+  >({
     mutationFn: async (scriptId) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(
         `${VITE_APP_API_URL}/scripts/${scriptId}/test`,
         {

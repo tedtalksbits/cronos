@@ -1,6 +1,5 @@
 // cronjobs/models.ts
 import mongoose, { Document, Schema, Types } from 'mongoose';
-import CronJobLog from '../cronjobLogs/models';
 
 export interface ICronJob extends Document {
   name: string;
@@ -60,18 +59,62 @@ const cronJobSchema: Schema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Middleware to delete all associated logs when a job is deleted
-// cronJobSchema.pre('remove', async function (next) {
-//   const job = this as unknown as ICronJob;
-//   await CronJobLog.deleteMany({ cronJob: job._id });
+// pre-save middleware
+// cronJobSchema.pre<ICronJob>('save', async function (next) {
+//   const cronJobDoc = this as unknown as ICronJob;
+//   const cronJobModel = this.constructor as mongoose.Model<ICronJob>;
+//   if (cronJobDoc.isNew) {
+//     await History.create({
+//       user: new mongoose.Types.ObjectId(cronJobDoc.user),
+//       actionType: 'created',
+//       entityId: cronJobDoc._id,
+//       entityType: 'CronJob',
+//     });
+//   } else {
+//     const original = await cronJobModel.findById(cronJobDoc._id);
+//     const diff = getDiffHistory(original, cronJobDoc);
+
+//     if (diff) {
+//       await History.create({
+//         user: new mongoose.Types.ObjectId(cronJobDoc.user),
+//         actionType: 'updated',
+//         entityId: cronJobDoc._id,
+//         entityType: 'CronJob',
+//         diff,
+//       });
+//     }
+//   }
 //   next();
 // });
 
-cronJobSchema.post<ICronJob>('findOneAndDelete', async function (doc) {
-  const cronJobDoc = doc as unknown as ICronJob;
-  if (cronJobDoc) {
-    await CronJobLog.deleteMany({ cronJob: cronJobDoc._id });
-  }
-});
+// post-update middleware
+// cronJobSchema.post<ICronJob>('findOneAndUpdate', async function (doc) {
+//   const cronJobDoc = doc as unknown as ICronJob;
+//   const cronJobModel = mongoose.model<ICronJob>('CronJob');
+//   const original = await cronJobModel.findById(cronJobDoc._id);
+//   const diff = getDiffHistory(original, cronJobDoc);
+
+//   await History.create({
+//     user: new mongoose.Types.ObjectId(cronJobDoc.user),
+//     actionType: 'updated',
+//     entityId: cronJobDoc._id,
+//     entityType: 'CronJob',
+//     diff,
+//   });
+// });
+
+// post-remove middleware
+// cronJobSchema.post<ICronJob>('findOneAndDelete', async function (doc) {
+//   const cronJobDoc = doc as unknown as ICronJob;
+//   if (cronJobDoc) {
+//     await History.create({
+//       user: new mongoose.Types.ObjectId(cronJobDoc.user),
+//       actionType: 'deleted',
+//       entityId: cronJobDoc._id,
+//       entityType: 'CronJob',
+//     });
+//     await CronJobLog.deleteMany({ cronJob: cronJobDoc._id });
+//   }
+// });
 
 export default mongoose.model<ICronJob>('CronJob', cronJobSchema);

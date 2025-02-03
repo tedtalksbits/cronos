@@ -7,6 +7,8 @@ import { addJob, getJob, removeJob } from '../../utils/jobManager';
 import { createCronJobTask } from './services';
 import CronJobLog from '../cronjobLogs/models';
 import CronJob, { ICronWebhook } from './models';
+import History from '../history/models';
+import { getDiffHistory } from '../../features/history/utils';
 
 // region getAllCronJobs
 export const getAllCronJobs = async (req: Request, res: Response) => {
@@ -137,6 +139,14 @@ export const createCronJob = async (req: Request, res: Response) => {
     logger.info(
       `Created new cron job: ${savedJob.name} from IP: ${requesterIp}`
     );
+
+    // create history record
+    await History.create({
+      user: user.userId,
+      actionType: 'created',
+      entityId: savedJob._id,
+      entityType: 'CronJob',
+    });
     // Schedule the job
     const task = createCronJobTask(savedJob, user.userId);
 
@@ -228,6 +238,21 @@ export const updateCronJob = async (req: Request, res: Response) => {
       update,
       { new: true }
     );
+    if (!updatedJob) {
+      return sendRestResponse({
+        status: 404,
+        message: 'Cron job not found',
+        res,
+      });
+    }
+    // create history record
+    await History.create({
+      user: user.userId,
+      actionType: 'updated',
+      entityId: updatedJob._id,
+      entityType: 'CronJob',
+      diff: getDiffHistory(currentJob, updatedJob),
+    });
 
     // If the schedule has changed, update the cron job
     const task = getJob(updatedJob?.id);
@@ -289,16 +314,31 @@ export const deleteCronJob = async (req: Request, res: Response) => {
     const job = await CronJob.findById({
       _id: cronJobId,
     });
-    if (job) {
-      const task = getJob(job.id);
-      if (task) {
-        task.stop(); // Stop the cron job
-        removeJob(job.id); // Remove the job from the map
-      }
-      await CronJob.findByIdAndDelete({
-        _id: cronJobId,
+    if (!job) {
+      return sendRestResponse({
+        status: 404,
+        message: 'Cron job not found',
+        res,
       });
     }
+
+    const task = getJob(job.id);
+    if (task) {
+      task.stop(); // Stop the cron job
+      removeJob(job.id); // Remove the job from the map
+    }
+    await CronJob.findByIdAndDelete({
+      _id: cronJobId,
+    });
+    // Delete all logs for the cron job
+    await CronJobLog.deleteMany({ jobId: cronJobId });
+    // create history record
+    await History.create({
+      user: user.userId,
+      actionType: 'deleted',
+      entityId: cronJobId,
+      entityType: 'CronJob',
+    });
     return sendRestResponse({
       status: 200,
       message: 'Cron job deleted',
@@ -602,31 +642,31 @@ export const deleteCronJobWebhook = async (req: Request, res: Response) => {
     //   (w) => w._id?.toString() !== webhookId
     // ) as any;
     existingWebhook.deleteOne();
-    await job.save();
+    const updatedJob = await job.save();
 
     // update the job in the job map
-    const task = getJob(job.id);
+    const task = getJob(updatedJob.id);
     if (task) {
       console.log('Stopping task');
       // stop the old job
       task.stop();
 
       // remove the job from the map
-      removeJob(job.id);
+      removeJob(updatedJob.id);
     }
 
     // only start a new task if the job is active
-    if (job.status === 'Active') {
-      const newTask = createCronJobTask(job, user.userId);
+    if (updatedJob.status === 'Active') {
+      const newTask = createCronJobTask(updatedJob, user.userId);
 
       // Store the task in the job map
-      addJob(job.id, newTask);
+      addJob(updatedJob.id, newTask);
     }
 
     return sendRestResponse({
       status: 200,
       message: 'Webhook deleted',
-      data: job,
+      data: updatedJob,
       res,
     });
   } catch (error) {

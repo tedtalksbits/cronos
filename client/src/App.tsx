@@ -11,6 +11,8 @@ import DashboardLayout from './app/components/layouts/dashboard-layout';
 import { UserManagement } from './app/routes/users';
 import { EmailVerification } from './app/routes/email-verification';
 import { Webhooks } from './app/routes/webhooks';
+import { ServerLogs } from './app/routes/server-logs';
+import { HistoryLogs } from './app/routes/history';
 
 function App() {
   return (
@@ -23,10 +25,26 @@ function App() {
           {/* <Route path='/register' element={<Register />} /> */}
           <Route element={<DashboardLayout />}>
             <Route
+              path='/history'
+              element={
+                <RouteProtector>
+                  <HistoryLogs />
+                </RouteProtector>
+              }
+            />
+            <Route
               path='/dashboard'
               element={
                 <RouteProtector>
                   <Dashboard />
+                </RouteProtector>
+              }
+            />
+            <Route
+              path='/server-logs'
+              element={
+                <RouteProtector>
+                  <ServerLogs />
                 </RouteProtector>
               }
             />

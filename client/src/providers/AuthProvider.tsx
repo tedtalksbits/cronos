@@ -13,15 +13,15 @@ export type User = {
   lastFailedLogin?: Date;
   failedLoginAttempts: number;
   status?: 'Active' | 'Inactive' | 'Pending' | 'Locked';
-  role?: 'User' | 'Admin';
+  role?: 'User' | 'Admin' | 'Bot';
+  isSuper: boolean;
 };
 import { createContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export type LoginCredentials = {
   email: string;
-  password: string;
-  token: string;
+  otp: string;
 };
 
 export type RegisterCredentials = {
@@ -34,11 +34,7 @@ export type RegisterCredentials = {
 
 export type LoginResponse = ServerResponseData<{
   token: string;
-  qrCode?: string;
-}>;
-
-export type RegisterResponse = ServerResponseData<{
-  qrCode: string;
+  user?: User;
 }>;
 
 export type LogoutResponse = ServerResponseData<undefined>;
@@ -51,15 +47,10 @@ type AuthContextType = {
     credentials: LoginCredentials,
     callback: (res: LoginResponse) => void
   ) => Promise<void>;
-  register: (
-    credentials: RegisterCredentials,
-    callback: (res: RegisterResponse) => void
-  ) => Promise<void>;
   logout: (callback: (res: LogoutResponse) => void) => Promise<void>;
   isAuthenticated: boolean;
-  qrCode: string | null;
   requestOTP: (
-    email: string,
+    { email, password }: { email: string; password: string },
     callback: (res: ServerResponseData<undefined>) => void
   ) => Promise<void>;
   sendVerificationEmail: (
@@ -89,12 +80,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
-  const [qrCode, setQrCode] = useState<string | null>(null);
+
   const navigate = useNavigate();
 
   // Check if user is already logged in from previous session
   useEffect(() => {
-    const storedToken = getLocalAuthToken;
+    const storedToken = getLocalAuthToken();
     const storedUser = getLocalUser();
     if (storedToken && storedUser) {
       setToken(storedToken);
@@ -107,7 +98,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     callback: (
       res: ServerResponseData<{
         token: string;
-        qrCode?: string;
+        user?: User;
       }>
     ) => void
   ) => {
@@ -120,28 +111,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       },
       body: JSON.stringify(credentials),
     });
-    const data = (await response.json()) as ServerResponseData<{
+    const json = (await response.json()) as ServerResponseData<{
       token: string;
-      qrCode?: string;
       user?: User;
     }>;
-    console.log(data);
+    console.log(json);
     setLoading(false);
-    if (data.status === 200) {
-      setToken(data.data.token);
-      setUser(data.data.user as User);
-      setQrCode(data.data.qrCode || null);
+    if (json.status === 200) {
+      setToken(json.data.token);
+      setUser(json.data.user as User);
 
-      storeLocalAuthToken(data.data.token);
-      storeLocalUser(data.data.user as User);
+      storeLocalAuthToken(json.data.token);
+      storeLocalUser(json.data.user as User);
 
       navigate('/');
     }
-    callback(data);
+    callback(json);
   };
 
   const requestOTP = async (
-    email: string,
+    { email, password }: { email: string; password: string },
     callback: (res: ServerResponseData<undefined>) => void
   ) => {
     const response = await fetch(`${VITE_APP_API_URL}/auth/otp`, {
@@ -151,36 +140,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       },
       body: JSON.stringify({
         email,
+        password,
       }),
     });
 
     const data = (await response.json()) as ServerResponseData<undefined>;
     console.log(data);
-    callback(data);
-  };
-
-  const register = async (
-    credentials: RegisterCredentials,
-    callback: (
-      res: ServerResponseData<{
-        qrCode: string;
-      }>
-    ) => void
-  ) => {
-    setLoading(true);
-    const response = await fetch(`${VITE_APP_API_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    });
-
-    const data = (await response.json()) as ServerResponseData<{
-      qrCode: string;
-    }>;
-    console.log(data);
-    setLoading(false);
     callback(data);
   };
 
@@ -255,9 +220,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         loading,
         login,
         logout,
-        register,
         isAuthenticated,
-        qrCode,
         requestOTP,
         sendVerificationEmail,
       }}

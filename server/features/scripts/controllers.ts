@@ -6,8 +6,10 @@ import path from 'path';
 import { exec } from 'child_process';
 import util from 'util';
 import Script from './models';
+import History from '../history/models';
 import { sendRestResponse } from '../../utils/rest';
 import logger from '../../utils/logger';
+import { getDiffHistory } from '../../features/history/utils';
 
 // Define the directory where scripts will be saved
 const SCRIPTS_DIR = path.join(__dirname, '../../opt/cronos/scripts');
@@ -49,6 +51,12 @@ export const createScript = async (req: Request, res: Response) => {
       tags,
     });
     await script.save();
+    await History.create({
+      user: createdBy,
+      actionType: 'created',
+      entityId: script._id,
+      entityType: 'Script',
+    });
 
     return sendRestResponse({
       status: 201,
@@ -158,7 +166,19 @@ export const updateScript = async (req: Request, res: Response) => {
       fs.writeFileSync(script.path, content);
     }
 
-    await script.save();
+    const updatedScript = await Script.findByIdAndUpdate(
+      req.params.id,
+      script,
+      { new: true }
+    );
+
+    await History.create({
+      user: req.user?.userId,
+      actionType: 'updated',
+      entityId: script._id,
+      entityType: 'Script',
+      diff: getDiffHistory(script, updatedScript),
+    });
     return sendRestResponse({
       status: 200,
       message: 'Script updated successfully',
@@ -195,6 +215,14 @@ export const deleteScript = async (req: Request, res: Response) => {
 
     // Delete the script record from the database
     await script.deleteOne();
+
+    await History.create({
+      user: req.user?.userId,
+      actionType: 'deleted',
+      entityId: script._id,
+      entityType: 'Script',
+    });
+
     return sendRestResponse({
       status: 200,
       message: 'Script deleted successfully',
@@ -311,6 +339,7 @@ function windowsRunDockerCommand(
     const command = `docker run --rm --memory=100m --cpus="0.5" -v "${dockerMountPath}:/scripts" script-runner bash /scripts/${scriptFileName}`;
 
     console.log('Executing PowerShell command:', command);
+    logger.info('Executing PowerShell command:', command);
 
     // Spawn a PowerShell process
     const ps = spawn('powershell.exe', ['-Command', command]);
@@ -328,6 +357,7 @@ function windowsRunDockerCommand(
 
     ps.on('close', (code) => {
       console.log(`PowerShell process exited with code: ${code}`);
+      logger.info(`PowerShell process exited with code: ${code}`);
       if (code === 0) {
         return sendRestResponse({
           res,

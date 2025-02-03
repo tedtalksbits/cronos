@@ -1,7 +1,9 @@
 // users/models.ts
 import mongoose, { Document, Schema } from 'mongoose';
+import History from '../history/models';
+import CronJob from '../cronjobs/models';
 
-interface User extends Document {
+export interface UserType extends Document {
   firstName: string;
   lastName: string;
   email: string;
@@ -15,11 +17,11 @@ interface User extends Document {
   lastFailedLogin?: Date;
   failedLoginAttempts: number;
   status?: 'Active' | 'Inactive' | 'Pending' | 'Locked';
-  role?: 'User' | 'Admin';
+  role?: 'User' | 'Admin' | 'Bot';
   isSuper?: boolean;
 }
 
-const userSchema: Schema = new mongoose.Schema<User>(
+const userSchema: Schema = new mongoose.Schema<UserType>(
   {
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
@@ -38,11 +40,31 @@ const userSchema: Schema = new mongoose.Schema<User>(
       enum: ['Active', 'Inactive', 'Pending', 'Locked'],
       default: 'Pending',
     },
-    role: { type: String, enum: ['User', 'Admin'], default: 'User' },
+    role: { type: String, enum: ['User', 'Admin', 'Bot'], default: 'User' },
     isSuper: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
+
+// Middleware to cascade delete histories when a user is deleted
+userSchema.pre('findOneAndDelete', async function (next) {
+  const user = this.getQuery()['_id']; // Get user ID being deleted
+  if (user) {
+    await History.deleteMany({ user }); // Delete all history records linked to this user
+    console.log(`Deleted all history records for user ${user}`);
+  }
+  next();
+});
+
+// Middleware to cascade delete CronJobs when a user is deleted
+userSchema.pre('findOneAndDelete', async function (next) {
+  const user = this.getQuery()['_id']; // Get user ID being deleted
+  if (user) {
+    await CronJob.deleteMany({ user }); // Delete all cron jobs linked to this user
+    console.log(`Deleted all cron jobs for user ${user}`);
+  }
+  next();
+});
 
 // Middleware to set the default avatar before saving
 userSchema.pre('save', function (next) {
@@ -72,4 +94,4 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-export default mongoose.model<User>('User', userSchema);
+export default mongoose.model<UserType>('User', userSchema);

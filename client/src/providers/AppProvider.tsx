@@ -45,7 +45,12 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     <React.Suspense fallback={<LoadingScreen />}>
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         {children}
-        <Toaster />
+        <Toaster
+          richColors
+          toastOptions={{
+            closeButton: true,
+          }}
+        />
       </ErrorBoundary>
     </React.Suspense>
   );

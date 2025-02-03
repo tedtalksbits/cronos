@@ -1,5 +1,4 @@
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons';
 import React, { useState } from 'react';
@@ -17,17 +16,13 @@ const PasswordInput = ({ classname, ...props }: PasswordInputProps) => {
         {...props}
         type={showPassword ? 'text' : 'password'}
       />
-      <Label
-        className='password-toggle absolute right-0 top-0 bottom-0 flex items-center justify-center w-10 h-10 cursor-pointer text-foreground/50'
-        htmlFor='password-toggle'
-        aria-label='Show password as plain text. Warning: this will display your password on the screen.'
-      >
+      <span className='password-toggle absolute right-0 top-0 bottom-0 flex items-center justify-center w-10 h-10 cursor-pointer text-foreground/50'>
         {showPassword ? (
           <EyeClosedIcon onClick={() => setShowPassword(!showPassword)} />
         ) : (
           <EyeOpenIcon onClick={() => setShowPassword(!showPassword)} />
         )}
-      </Label>
+      </span>
     </div>
   );
 };

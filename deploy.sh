@@ -42,7 +42,7 @@ BRANCH="main"  # Set your production branch
 TOTAL_TASKS=$(grep -c "\[TASK\]" "$0") # Count the number of tasks
 COMPLETED_TASKS=0
 SERVER_PM2_NAME="cronos-server"
-CLIENT_PM2_NAME="cron-client"
+CLIENT_PM2_NAME="cronos-client"
 
 # Function to update progress
 update_progress() {
@@ -87,6 +87,22 @@ update_progress
 
 # [TASK] Build the client
 echo -e "${YELLOW}[CRONOS DEPLOY] Skipping client building, live update is running...${RESET}"
+update_progress
+
+# [TASK] Verify Docker installation
+echo -e "${BLUE}[CRONOS SETUP] Verifying Docker installation...${RESET}"
+if ! command -v docker &>/dev/null 
+then
+  echo -e "${YELLOW}Docker is not installed. Please install Docker to proceed.${RESET}"
+  exit 1
+fi
+update_progress
+
+# [TASK] Build Docker image for script-runner
+echo -e "${BLUE}[CRONOS SETUP] Building Docker image for script-runner...${RESET}"
+cd server/docker || echo "Directory: server/opt/cronos/docker not found"
+docker build -t script-runner .
+cd ../..
 update_progress
 
 # [TASK] PM2 Restart Server

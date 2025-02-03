@@ -17,11 +17,6 @@ export default {
       },
     },
     extend: {
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -141,6 +136,7 @@ export default {
         fira: ['Fira Code', 'serif'],
         space: ['Space Mono', 'monospace'],
       },
+
       boxShadow: {
         // light
         'tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',

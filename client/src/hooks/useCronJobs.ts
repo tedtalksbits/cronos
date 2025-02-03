@@ -51,8 +51,6 @@ export interface ICronJobLog {
   updatedAt: string; // Last update date
 }
 
-const localAuthToken = getLocalAuthToken();
-
 const useGetCronJobs = () => {
   return useQuery<RestResponse<CronJob[]>, APIError>({
     queryKey: ['cron-jobs'],
@@ -89,6 +87,7 @@ const useGetCronJob = (id: string) => {
   return useQuery<RestResponse<CronJob>, APIError>({
     queryKey: ['cron-jobs', id],
     queryFn: async () => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/cronJobs/${id}`, {
         headers: {
           Authorization: `Bearer ${localAuthToken}`,
@@ -113,6 +112,7 @@ const useCreateCronJob = () => {
     unknown
   >({
     mutationFn: async (cronJob) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/cronJobs`, {
         method: 'POST',
         headers: {
@@ -145,6 +145,7 @@ const useUpdateCronJob = () => {
     unknown
   >({
     mutationFn: async (cronJob) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(
         `${VITE_APP_API_URL}/cronJobs/${cronJob._id}`,
         {
@@ -175,6 +176,7 @@ const useDeleteCronJob = () => {
   const queryClient = useQueryClient();
   return useMutation<RestResponse<CronJob>, APIError, string, unknown>({
     mutationFn: async (id) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/cronJobs/${id}`, {
         method: 'DELETE',
         headers: {
@@ -200,6 +202,7 @@ const useGetCronJobStats = (id: string) => {
   return useQuery<RestResponse<CronJob>, APIError>({
     queryKey: ['cron-jobs-stats', id],
     queryFn: async () => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(`${VITE_APP_API_URL}/cronJobs/${id}/stats`, {
         headers: {
           Authorization: `Bearer ${localAuthToken}`,
@@ -241,6 +244,7 @@ const useGetCronJobLogs = ({
   return useQuery<RestResponse<ICronJobLog[]>, APIError>({
     queryKey: ['cron-jobs-logs', id, meta],
     queryFn: async () => {
+      const localAuthToken = getLocalAuthToken();
       const url = new URL(`${VITE_APP_API_URL}/cronJobs/${id}/logs`);
       url.searchParams.set('page', meta.page.toString());
       url.searchParams.set('limit', meta.limit.toString());
@@ -270,7 +274,7 @@ const useGetCronJobLogs = ({
         toast.error('Error fetching cron job logs');
         throw APIError(response.status, errorResponse.message);
       }
-      return response.json() as Promise<RestResponse<ICronJobLog[]>>;
+      return response.json();
     },
     placeholderData: keepPreviousData,
   });
@@ -286,6 +290,7 @@ const useCreateCronJobWebHook = () => {
     unknown
   >({
     mutationFn: async ({ webhook, cronJobId }) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(
         `${VITE_APP_API_URL}/cronJobs/${cronJobId}/webhooks`,
         {
@@ -321,6 +326,7 @@ const useUpdateCronJobWebHook = () => {
     unknown
   >({
     mutationFn: async ({ cronJobId, webhook }) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(
         `${VITE_APP_API_URL}/cronJobs/${cronJobId}/webhooks/${webhook._id}`,
         {
@@ -359,6 +365,7 @@ const useDeleteCronJobWebHook = () => {
     unknown
   >({
     mutationFn: async ({ cronJobId, webhookId }) => {
+      const localAuthToken = getLocalAuthToken();
       const response = await fetch(
         `${VITE_APP_API_URL}/cronJobs/${cronJobId}/webhooks/${webhookId}`,
         {

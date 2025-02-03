@@ -1,25 +1,28 @@
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/hooks/useSidebar';
-import { LogOutIcon, SidebarIcon } from 'lucide-react';
+import { LogOutIcon, MoonIcon, SidebarIcon, SunIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '../../components/ui/dropdown-menu';
-import { Button } from '../../components/ui/button';
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { BREAK_POINTS, useMediaQuery } from '@/hooks/utils/useMediaQuery';
 import { DrawerNav } from './drawer-nav';
+import { useTheme } from '@/providers/themeProvider';
 export default function PageHeader() {
   const { toggleSidebar } = useSidebar();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isDesktop = useMediaQuery(BREAK_POINTS.md);
+  const { theme, setTheme } = useTheme();
 
   const fromPath =
     typeof location.state?.from === 'string'
@@ -27,7 +30,6 @@ export default function PageHeader() {
       : ''; // Fallback to an empty string if not a valid string
 
   const breadcrumbs = new Set([fromPath, location?.pathname?.replace('/', '')]);
-
   return (
     <header
       className={cn(
@@ -86,22 +88,41 @@ export default function PageHeader() {
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem className='bg-secondary text-secondary-foreground'>
-                <Button
-                  className='w-full flex justify-between gap-2 items-center'
-                  onClick={() =>
-                    logout((res) => {
-                      if (res) {
-                        console.log('Logged out');
-                        navigate('/login');
-                      }
-                    })
-                  }
-                >
-                  Logout
-                  <LogOutIcon className='size-4' />
-                </Button>
+            <DropdownMenuContent className='bg-accent'>
+              <DropdownMenuItem className='flex flex-col gap-1 text-left justify-start border'>
+                <p className='text-xs text-muted-foreground'>
+                  {user.firstName} {user.isSuper ? '(Admin)' : ''}
+                </p>
+                <p className='text-[.675rem] text-muted-foreground/50'>
+                  {user.email}
+                </p>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                className='cursor-pointer flex items-center justify-between gap-2 bg-foreground/10'
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              >
+                Toggle Theme
+                {theme === 'dark' ? (
+                  <SunIcon className='size-4' />
+                ) : (
+                  <MoonIcon className='size-4' />
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className='cursor-pointer bg-primary text-primary-foreground flex justify-between gap-2 items-center'
+                onClick={() =>
+                  logout((res) => {
+                    if (res) {
+                      console.log('Logged out');
+                      navigate('/login');
+                    }
+                  })
+                }
+              >
+                Logout
+                <LogOutIcon className='size-4' />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

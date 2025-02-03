@@ -6,7 +6,10 @@ interface PageLayoutProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function PageLayout({ children, ...props }: PageLayoutProps) {
   return (
-    <div {...props} className={cn('container p-4', props.className)}>
+    <div
+      {...props}
+      className={cn('container p-4 pt-[4.5rem] sm:pt-4', props.className)}
+    >
       {children}
     </div>
   );

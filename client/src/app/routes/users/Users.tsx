@@ -40,7 +40,14 @@ import { LoadingPage } from '@/app/components/loading';
 import createDialog from '@/components/ui/createDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit2Icon, MailIcon, Trash2Icon } from 'lucide-react';
+import {
+  BotIcon,
+  Edit2Icon,
+  MailIcon,
+  PlusIcon,
+  Trash2Icon,
+  User2Icon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const UserManagement = () => {
@@ -63,6 +70,8 @@ export const UserManagement = () => {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] =
     useState(false);
+  const humanUsers = users?.data?.filter((user) => user.role !== 'Bot');
+  const botUsers = users?.data?.filter((user) => user.role === 'Bot');
 
   const handleUpdateUser = async (updatedUser: Partial<User>) => {
     const isUpdated =
@@ -89,8 +98,13 @@ export const UserManagement = () => {
   };
 
   async function handleDeleteUser(user: User) {
-    if (user._id === loggedInUser?._id) {
-      return toast.error('You cannot delete your own account');
+    if (
+      user._id === loggedInUser?._id ||
+      user.role === 'Bot' ||
+      user.isSuper ||
+      user.role === 'Admin'
+    ) {
+      return toast.error('You cannot delete your this account');
     }
     if (loggedInUser?.role !== 'Admin') {
       toast.error('You do not have permission to delete this user');
@@ -159,10 +173,17 @@ export const UserManagement = () => {
       <PageHeading className='mb-6'>User Management</PageHeading>
       <Card>
         <CardHeader className='flex flex-row items-center justify-between'>
-          <CardTitle>Users</CardTitle>
+          <CardTitle className='flex items-center gap-2'>
+            <User2Icon className='size-6' />
+            <span>Users</span>
+          </CardTitle>
 
-          <Button onClick={() => setIsAddUserOpen(true)} className='mb-4'>
-            Add User
+          <Button
+            onClick={() => setIsAddUserOpen(true)}
+            className='mb-4'
+            size={'icon'}
+          >
+            <PlusIcon className='size-4' />
           </Button>
         </CardHeader>
         <CardContent>
@@ -178,7 +199,7 @@ export const UserManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users?.data?.map((user) => (
+              {humanUsers?.map((user) => (
                 <TableRow
                   key={user._id}
                   className={cn('', {
@@ -204,7 +225,12 @@ export const UserManagement = () => {
                     <Button
                       variant='outline'
                       size='icon'
-                      className='mr-2'
+                      className={cn('mr-2', {
+                        hidden:
+                          user.role === 'Bot' ||
+                          user.isSuper ||
+                          user.role === 'Admin',
+                      })}
                       onClick={() => {
                         setSelectedUser(user);
                         setIsAddUserOpen(true);
@@ -216,7 +242,12 @@ export const UserManagement = () => {
                     <Button
                       variant='destructive'
                       size='icon'
-                      className='mr-2'
+                      className={cn('mr-2', {
+                        hidden:
+                          user.role === 'Bot' ||
+                          user.isSuper ||
+                          user.role === 'Admin',
+                      })}
                       onClick={async () => await handleDeleteUser(user)}
                       disabled={isDeleteUserPending}
                     >
@@ -233,6 +264,42 @@ export const UserManagement = () => {
                       </Button>
                     )}
                   </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      <Card className='mt-6'>
+        <CardHeader className='flex flex-row items-center justify-between'>
+          <CardTitle className='flex items-center gap-2'>
+            <BotIcon className='size-6' />
+            <span>System Users</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+
+                <TableHead>Status</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {botUsers?.map((user) => (
+                <TableRow key={user._id}>
+                  <TableCell>
+                    {user.firstName} {user.lastName}
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+
+                  <TableCell>{user.status}</TableCell>
+                  <TableCell>{user.role}</TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -338,7 +405,7 @@ function UserForm({
           required
         />
       </div>
-      <div>
+      <div className={cn('', { hidden: user?.role === 'Bot' })}>
         <Label htmlFor='email'>Email</Label>
         <Input
           id='email'
@@ -362,7 +429,7 @@ function UserForm({
           />
         </div>
       )}
-      <div>
+      <div className={cn('', { hidden: user?.role === 'Bot' })}>
         <Label htmlFor='phone'>Phone</Label>
         <Input
           id='phone'
@@ -372,7 +439,7 @@ function UserForm({
           required
         />
       </div>
-      <div>
+      <div className={cn('', { hidden: user?.role === 'Bot' })}>
         <Label htmlFor='status'>Status</Label>
         <Select
           name='status'
@@ -389,7 +456,7 @@ function UserForm({
           </SelectContent>
         </Select>
       </div>
-      <div>
+      <div className={cn('', { hidden: user?.role === 'Bot' })}>
         <Label htmlFor='role'>Role</Label>
         <Select
           name='role'
@@ -402,6 +469,7 @@ function UserForm({
           <SelectContent>
             <SelectItem value='User'>User</SelectItem>
             <SelectItem value='Admin'>Admin</SelectItem>
+            <SelectItem value='Bot'>Bot</SelectItem>
           </SelectContent>
         </Select>
       </div>

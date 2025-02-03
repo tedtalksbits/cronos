@@ -12,17 +12,22 @@ import {
 } from '../../utils/auth';
 import logger from '../../utils/logger';
 import User from './models';
+import History from '../history/models';
 import OTP from '../otp/models';
 import { createOneTimePassword, sendOtpEmail } from '../../utils/otp';
 import { emailTemplates, sendMail } from '../../utils/mailer';
+import { getDiffHistory } from '../../features/history/utils';
+import { getSystemUserId } from '../../features/serverBot/services';
+import { getSystemAdminUserId } from './services';
 
+// region Generate OTP
 export const generateOTP = async (req: Request, res: Response) => {
-  const { email } = req.body;
+  const { email, password } = req.body;
 
-  if (!email) {
+  if (!email || !password) {
     return sendRestResponse({
       status: 400,
-      message: 'Email is required',
+      message: 'Email and password are required',
       res,
     });
   }
@@ -39,6 +44,35 @@ export const generateOTP = async (req: Request, res: Response) => {
         res,
       });
     }
+
+    // Validate password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      user.lastFailedLogin = new Date();
+      user.failedLoginAttempts += 1;
+
+      if (user.failedLoginAttempts >= 3) {
+        user.status = 'Locked';
+        await user.save();
+        return sendRestResponse({
+          status: 400,
+          message: 'User account locked',
+          res,
+        });
+      }
+
+      await user.save();
+      return sendRestResponse({
+        status: 400,
+        message: 'Invalid credentials',
+        res,
+      });
+    }
+
+    // Reset failed login attempts
+    user.failedLoginAttempts = 0;
+    user.lastLogin = new Date();
+    await user.save();
 
     const otpCode = createOneTimePassword();
 
@@ -74,7 +108,9 @@ export const generateOTP = async (req: Request, res: Response) => {
     });
   }
 };
+// endregion Generate OTP
 
+// region Verify OTP
 export const verifyOTP = async (req: Request, res: Response) => {
   const { email, otp } = req.body;
 
@@ -129,7 +165,9 @@ export const verifyOTP = async (req: Request, res: Response) => {
     });
   }
 };
+// endregion Verify OTP
 
+// region Register
 export const register = async (req: Request, res: Response) => {
   const { email, password, firstName, lastName, phone } = req.body;
 
@@ -242,12 +280,14 @@ export const register = async (req: Request, res: Response) => {
     });
   }
 };
+// endregion Register
 
+// region Login
 export const login = async (req: Request, res: Response) => {
-  const { email, password, token } = req.body;
+  const { email, otp } = req.body;
 
   // validation
-  if (!email || !password || !token) {
+  if (!email || !otp) {
     return sendRestResponse({
       status: 400,
       message: 'Please enter all fields',
@@ -281,35 +321,6 @@ export const login = async (req: Request, res: Response) => {
     return;
   }
 
-  // Validate password
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    user.lastFailedLogin = new Date();
-    user.failedLoginAttempts += 1;
-
-    if (user.failedLoginAttempts >= 3) {
-      user.status = 'Locked';
-      await user.save();
-      return sendRestResponse({
-        status: 400,
-        message: 'User account locked',
-        res,
-      });
-    }
-
-    await user.save();
-    return sendRestResponse({
-      status: 400,
-      message: 'Invalid credentials',
-      res,
-    });
-  }
-
-  // Reset failed login attempts
-  user.failedLoginAttempts = 0;
-  user.lastLogin = new Date();
-  await user.save();
-
   const jwtToken = generateAuthToken({
     userId: user._id as string,
     role: user.role || 'User',
@@ -318,7 +329,7 @@ export const login = async (req: Request, res: Response) => {
 
   const existingOTP = await OTP.findOne({
     userId: user._id,
-    otp: token,
+    otp,
   });
 
   if (!existingOTP) {
@@ -341,7 +352,9 @@ export const login = async (req: Request, res: Response) => {
     res,
   });
 };
+// endregion Login
 
+// region Logout
 export function logout(req: Request, res: Response) {
   req.body.user = null;
   return sendRestResponse({
@@ -350,7 +363,9 @@ export function logout(req: Request, res: Response) {
     res,
   });
 }
+// endregion Logout
 
+// region Who Am I
 export const whoAmI = async (req: Request, res: Response) => {
   const user = req.user;
   if (!user) {
@@ -371,7 +386,9 @@ export const whoAmI = async (req: Request, res: Response) => {
     res,
   });
 };
-// Admin approval handler: 2fa otp
+// endregion Who Am I
+
+// region Approve User
 export const approveUser = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
@@ -385,7 +402,15 @@ export const approveUser = async (req: Request, res: Response) => {
   }
 
   user.status = 'Active'; // Change status to active
-  await user.save();
+  const upatedUser = await User.findByIdAndUpdate(userId, user, { new: true });
+
+  await History.create({
+    actionType: 'updated',
+    entityType: 'User',
+    entityId: userId,
+    user: req.user?.userId,
+    diff: getDiffHistory(user, upatedUser),
+  });
 
   // send user verification email
   await sendMail({
@@ -407,7 +432,96 @@ export const approveUser = async (req: Request, res: Response) => {
     res,
   });
 };
+// endregion Approve User
+// Admin approval handler: 2fa with qr code
+// export const approveUser = async (req: Request, res: Response) => {
+//   const { userId } = req.params;
 
+//   const user = await User.findById(userId);
+//   if (!user || user.status !== 'Pending') {
+//     return sendRestResponse({
+//       status: 404,
+//       message: 'User not found or already approved',
+//       res,
+//     });
+//   }
+
+//   const secret = generateSecret();
+
+//   user.secret = secret.base32; // Add secret for 2FA
+//   user.status = 'Active'; // Change status to active
+//   await user.save();
+
+//   // create otpauth
+//   const otpauth = `otpauth://totp/${user.email}?secret=${secret.base32}&issuer=CronosAPI`;
+//   let qrCode;
+
+//   // create qr code
+//   try {
+//     qrCode = await QRCode.toDataURL(otpauth);
+//   } catch (error) {
+//     logger.error('Error generating QR code', error);
+//     return sendRestResponse({
+//       status: 500,
+//       message: error.message,
+//       res,
+//     });
+//   }
+
+//   // Decode the Base64-encoded image data
+//   const qrCodeData = qrCode.replace(/^data:image\/png;base64,/, '');
+
+//   try {
+//     // send email to user
+//     const transporter = nodemailer.createTransport({
+//       host: process.env.MAIL_HOST,
+//       port: 587,
+//       secure: false,
+//       auth: {
+//         user: process.env.MAIL_USER,
+//         pass: process.env.MAIL_PASS,
+//       },
+//     });
+
+//     const mailOptions = {
+//       from: process.env.MAIL_USER,
+//       to: user.email,
+//       subject: 'Your account has been created!',
+//       text: 'Please activate your account by scanning the QR code below',
+//       html: `
+//       <h1>Welcome to Cronos⌚</h1>
+//       <p>Please activate your account by scanning the QR code below:</p>
+//       <img src="cid:qrCodeImage" alt="QR Code" style="display:block; margin: auto;" />
+//     `,
+//       attachments: [
+//         {
+//           filename: 'qrcode.png',
+//           content: qrCodeData,
+//           encoding: 'base64',
+//           cid: 'qrCodeImage', // This must match the cid used in the HTML
+//         },
+//       ],
+//     };
+
+//     transporter.sendMail(mailOptions, function (error, info) {
+//       if (error) {
+//         console.log(error);
+//       } else {
+//         console.log('Email sent: ' + info.response);
+//       }
+//     });
+//   } catch (error) {
+//     logger.error('Error sending email', error);
+//   }
+
+//   return sendRestResponse({
+//     status: 200,
+//     message: 'User approved successfully',
+//     res,
+//   });
+// };
+
+// region Send Verification Email
 export const sendVerificationEmail = async (req: Request, res: Response) => {
   const { email } = req.body;
 
@@ -456,7 +570,9 @@ export const sendVerificationEmail = async (req: Request, res: Response) => {
     res,
   });
 };
+// endregion Send Verification Email
 
+// region Verify Email
 export const verifyEmail = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
@@ -507,6 +623,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
     res.redirect(errorUrl);
   }
 };
+// endregion Verify Email
 
 /*
   ========================================
@@ -514,7 +631,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
   ========================================
 */
 
-// Get all users
+// region Get all users
 export const getUsers = async (_req: Request, res: Response) => {
   try {
     const users = await User.find().select('-password -secret');
@@ -534,7 +651,7 @@ export const getUsers = async (_req: Request, res: Response) => {
   }
 };
 
-// Get user by ID
+// region Get user by ID
 export const getUserById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
@@ -571,15 +688,29 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-// Update user
+// region Update user
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
+
   const { firstName, lastName, email, phone, role, status } = req.body;
 
   if (!id) {
     return sendRestResponse({
       status: 400,
       message: 'User ID is required',
+      res,
+    });
+  }
+  const systemUserId = await getSystemUserId();
+  const systemAdminUserId = await getSystemAdminUserId();
+
+  if (
+    id === systemUserId.toHexString() ||
+    id === systemAdminUserId.toHexString()
+  ) {
+    return sendRestResponse({
+      status: 403,
+      message: 'Cannot update system user',
       res,
     });
   }
@@ -601,7 +732,16 @@ export const updateUser = async (req: Request, res: Response) => {
     if (role) user.role = role;
     if (status) user.status = status;
 
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(id, user, { new: true });
+
+    await History.create({
+      actionType: 'updated',
+      entityType: 'User',
+      entityId: id,
+      user: req.user?.userId,
+      diff: getDiffHistory(user, updatedUser),
+    });
+
     return sendRestResponse({
       status: 200,
       message: 'User updated successfully',
@@ -618,10 +758,10 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-// Delete user
+// region Delete user
 export const deleteUser = async (req: Request, res: Response) => {
   const authUser = req.user;
-  if (!authUser) {
+  if (!authUser || !authUser.role || authUser.role !== 'Admin') {
     return sendRestResponse({
       status: 401,
       message: 'Unauthorized',
@@ -634,6 +774,24 @@ export const deleteUser = async (req: Request, res: Response) => {
     return sendRestResponse({
       status: 400,
       message: 'User ID is required',
+      res,
+    });
+  }
+
+  const systemUserId = await getSystemUserId();
+  const systemAdminUserId = await getSystemAdminUserId();
+
+  console.log('systemUserId', systemUserId);
+  console.log('systemAdminUserId', systemAdminUserId);
+  console.log('id', id);
+
+  if (
+    id === systemUserId.toHexString() ||
+    id === systemAdminUserId.toHexString()
+  ) {
+    return sendRestResponse({
+      status: 403,
+      message: 'Cannot delete system user',
       res,
     });
   }
@@ -655,6 +813,13 @@ export const deleteUser = async (req: Request, res: Response) => {
         res,
       });
     }
+
+    await History.create({
+      actionType: 'deleted',
+      entityType: 'User',
+      entityId: id,
+      user: req.user?.userId,
+    });
     return sendRestResponse({
       status: 200,
       message: 'User deleted',
@@ -670,7 +835,7 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
-// Reset password
+// region Reset password
 export const resetPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
 
@@ -738,7 +903,7 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
-// Update password
+// region Update password
 export const updatePassword = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { password } = req.body;
@@ -761,6 +926,7 @@ export const updatePassword = async (req: Request, res: Response) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+
     await User.findByIdAndUpdate(id, { password: hashedPassword });
     return sendRestResponse({
       status: 200,
@@ -777,7 +943,7 @@ export const updatePassword = async (req: Request, res: Response) => {
   }
 };
 
-// create user
+// region create user
 export const createUser = async (req: Request, res: Response) => {
   const { email, password, firstName, lastName, phone, role, status } =
     req.body;
@@ -803,6 +969,13 @@ export const createUser = async (req: Request, res: Response) => {
       status,
     });
     await user.save();
+
+    await History.create({
+      actionType: 'created',
+      entityType: 'User',
+      entityId: user._id,
+      user: req.user?.userId,
+    });
 
     return sendRestResponse({
       status: 201,
