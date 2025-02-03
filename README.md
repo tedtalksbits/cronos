@@ -57,7 +57,7 @@ Cronos is a robust and flexible cron job management system designed for develope
 
 - **Node.js**: Ensure you have Node.js installed on your machine.
 - **Docker**: Docker is required for script sandboxing.
-- **MongoDB**: A running MongoDB instance.
+- **MongoDB(Helper Script)**: A running MongoDB instance.
 
 
 **Development Setup**
